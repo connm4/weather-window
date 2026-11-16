@@ -110,8 +110,112 @@ async function getWeather(locationName) {
             })
             .join("");
 
-        // STEP 4: Display the information
+        
+        // Extract the next 12 hours into individual forecast objects
 
+        const upcomingForecast = hourly.time
+            .slice(startIndex, startIndex + 12)
+            .map((time, offset) => {
+
+                const index = startIndex + offset;
+
+                return {
+                    time: time.slice(11, 16),
+                    temperature: hourly.temperature_2m[index],
+                    rainProbability: hourly.precipitation_probability[index],
+                    windSpeed: hourly.wind_speed_10m[index]
+                };
+
+            });
+
+        // Find hours that meet our walking criteria
+
+        const suitableHours = upcomingForecast.filter(hour => {
+
+            return (
+                Number.isFinite(hour.temperature) &&
+                Number.isFinite(hour.rainProbability) &&
+                Number.isFinite(hour.windSpeed) &&
+                hour.rainProbability <= 30 &&
+                hour.windSpeed <= 25 &&
+                hour.temperature >= 5 &&
+                hour.temperature <= 25
+            );
+        });
+
+        // Sort suitable hours by rain probability,
+        // using wind speed as a tie-breaker
+
+        suitableHours.sort((a, b) => {
+
+            if (a.rainProbability !== b.rainProbability) {
+                return a.rainProbability - b.rainProbability;
+            }
+
+            return a.windSpeed - b.windSpeed;
+
+        });
+
+        // Select the best available hour
+
+        const recommendedHour = suitableHours[0];
+
+        // Create the walking recommendation message
+
+        let recommendationHtml;
+
+        if (recommendedHour) {
+
+            recommendationHtml = `
+                <div class="recommendation-card">
+
+                    <h3>Recommended time for a walk</h3>
+
+                    <h2>${recommendedHour.time}</h2>
+
+                    <p>
+                        This hour has the lowest rain probability
+                        among the hours that meet our criteria.
+                    </p>
+
+                    <p>
+                        Temperature: ${recommendedHour.temperature}°C
+                    </p>
+
+                    <p>
+                        Rain probability: ${recommendedHour.rainProbability}%
+                    </p>
+
+                    <p>
+                        Wind speed: ${recommendedHour.windSpeed} km/h
+                    </p>
+
+                </div>
+            `;
+
+        } else {
+
+            recommendationHtml = `
+                <div class="recommendation-card no-recommendation">
+
+                    <h3>No suitable walking time found</h3>
+
+                    <p>
+                        None of the next 12 hours meet all
+                        of our selected weather criteria.
+                    </p>
+
+                    <p>
+                        Consider checking the forecast again later.
+                    </p>
+
+                </div>
+            `;
+
+        }
+
+        // STEP 4: Display the information
+        
         weatherSection.innerHTML = `
             <h2>Weather in ${placeName}</h2>
 
@@ -127,11 +231,22 @@ async function getWeather(locationName) {
 
             <p>Precipitation: ${current.precipitation} ${units.precipitation}</p>
 
+            <h3>Walking Recommendation</h3>
+
+            ${recommendationHtml}
+
             <h3>Hourly Forecast – Next 12 Hours</h3>
 
             <div class="forecast-grid">
                 ${forecastHtml}
             </div>
+
+            <p class="weather-attribution">
+                Weather data by
+                <a href="https://open-meteo.com/"
+                target="_blank"
+                rel="noopener noreferrer">Open-Meteo</a>
+            </p>
         `;
 
         message.textContent = "Weather information loaded successfully.";

@@ -65,3 +65,48 @@ button {
     font-weight: bold;
     color: #2878c8;
 }
+
+
+/* Walking recommendation */
+
+.recommendation-card {
+    background-color: #e7f5eb;
+    border-left: 5px solid #269653;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 15px 0 25px;
+}
+
+.recommendation-card h3 {
+    margin-top: 0;
+    color: #205b36;
+}
+
+.recommendation-card h2 {
+    font-size: 32px;
+    margin: 10px 0;
+    color: #205b36;
+}
+
+.recommendation-card p {
+    margin: 8px 0;
+}
+
+.no-recommendation {
+    background-color: #fff3e0;
+    border-left-color: #d99027;
+}
+
+.no-recommendation h3 {
+    color: #805315;
+}
+
+.weather-attribution {
+    margin-top: 25px;
+    font-size: 12px;
+    color: #666;
+}
+
+.weather-attribution a {
+    color: #2878c8;
+}
