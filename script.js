@@ -1,44 +1,73 @@
-
 const locationInput = document.getElementById("location-input");
 const searchButton = document.getElementById("search-button");
 const message = document.getElementById("message");
 const weatherSection = document.getElementById("weather-section");
 
-// Example coordinates for London
-const latitude = 51.5072;
-const longitude = -0.1276;
+// Retrieve weather information for a searched location
+async function getWeather(locationName) {
 
-// Function to retrieve weather information
-async function getWeather() {
-
-    message.textContent = "Loading weather information...";
+    message.textContent = `Searching for ${locationName}...`;
     weatherSection.innerHTML = "";
-
-    // Construct the API URL
-    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,wind_speed_10m&forecast_days=1&timezone=auto`;
 
     try {
 
-        // Send a request to the API
-        const response = await fetch(weatherUrl);
+        // STEP 1: Search for the location using the Geocoding API
 
-        // Check whether the request was successful
-        if (!response.ok) {
-            throw new Error(`HTTP error: ${response.status}`);
+        const geocodingUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(locationName)}&count=5&language=en&format=json`;
+
+        const geocodingResponse = await fetch(geocodingUrl);
+
+        if (!geocodingResponse.ok) {
+            throw new Error(`Geocoding HTTP error: ${geocodingResponse.status}`);
         }
 
-        // Convert the response into JSON
-        const data = await response.json();
+        const geocodingData = await geocodingResponse.json();
 
-        // Extract the current weather information
-        const current = data.current;
-        const units = data.current_units;
+        // Check whether any matching locations were found
 
-        console.log(data);
+        if (!geocodingData.results || geocodingData.results.length === 0) {
 
-        // Display the weather information
+            message.textContent = `No location found for "${locationName}". Try adding a country or region.`;
+            return;
+
+        }
+
+        // Use the first matching location
+
+        const place = geocodingData.results[0];
+
+        const latitude = place.latitude;
+        const longitude = place.longitude;
+
+        const placeName = place.country
+            ? `${place.name}, ${place.country}`
+            : place.name;
+
+        message.textContent = `Found ${placeName}. Retrieving weather...`;
+
+        // STEP 2: Retrieve weather using the coordinates
+
+        const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,wind_speed_10m&forecast_days=1&timezone=auto`;
+
+        const weatherResponse = await fetch(weatherUrl);
+
+        if (!weatherResponse.ok) {
+            throw new Error(`Weather HTTP error: ${weatherResponse.status}`);
+        }
+
+        const weatherData = await weatherResponse.json();
+
+        // STEP 3: Extract the weather information
+
+        const current = weatherData.current;
+        const units = weatherData.current_units;
+
+        console.log(weatherData);
+
+        // STEP 4: Display the information
+
         weatherSection.innerHTML = `
-            <h2>Weather in London</h2>
+            <h2>Weather in ${placeName}</h2>
 
             <p>Temperature: ${current.temperature_2m} ${units.temperature_2m}</p>
 
@@ -63,6 +92,7 @@ async function getWeather() {
 }
 
 // Respond to the Search button
+
 searchButton.addEventListener("click", function() {
 
     const location = locationInput.value.trim();
@@ -71,13 +101,13 @@ searchButton.addEventListener("click", function() {
 
         message.textContent = "Please enter a location.";
 
-    } else if (location.toLowerCase() !== "london") {
+    } else if (location.length < 2) {
 
-        message.textContent = "For now, please enter London. Other locations are coming soon.";
+        message.textContent = "Please enter at least two characters.";
 
     } else {
 
-        getWeather();
+        getWeather(location);
 
     }
 
