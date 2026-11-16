@@ -21,6 +21,27 @@ Weather Window aims to make this information easy to access and understand in on
 - Display an hourly weather forecast.
 - Highlight an hour with a comparatively low probability of rainfall.
 - Handle invalid searches and API errors appropriately.
+- Analyse hourly weather forecasts using predefined criteria.
+- Identify potentially suitable times for outdoor activities.
+- Explain why a particular time has been recommended.
+
+## Walking Recommendation Logic
+
+The application uses a simple rule-based approach
+to identify potentially suitable walking conditions.
+
+The initial criteria are:
+
+- Rain probability of 30% or lower.
+- Wind speed of 25 km/h or lower.
+- Temperature between 5°C and 25°C.
+
+Where multiple hours meet these criteria, the
+application selects the hour with the lowest
+rain probability, using wind speed as a tie-breaker.
+
+These thresholds are configurable prototype
+assumptions, not official safety recommendations.
 
 ## Technologies
 
